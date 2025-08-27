@@ -5,11 +5,14 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
-    private val repository: AuthRepository = AuthRepository() // default instance
+    private val repository: AuthRepository
 ) : ViewModel() {
 
     var role: String? = null
         private set
+
+    val token: String?
+        get() = repository.getToken()
 
     fun signup(
         name: String,
@@ -30,11 +33,7 @@ class AuthViewModel(
         }
     }
 
-    fun login(
-        username: String,
-        password: String,
-        onResult: (Boolean, String) -> Unit
-    ) {
+    fun login(username: String, password: String, onResult: (Boolean, String) -> Unit) {
         viewModelScope.launch {
             try {
                 val response = repository.login(username, password)
@@ -45,4 +44,40 @@ class AuthViewModel(
             }
         }
     }
+
+
+    fun loadAdminDashboardResult(onResult: (Result<AdminDashboardResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val data = repository.getAdminDashboard()
+                onResult(Result.success(data))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
+    fun loadCustomerDashboard(onResult: (CustomerDashboardResponse?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val data = repository.getCustomerDashboard()
+                onResult(data)
+            } catch (e: Exception) {
+                onResult(null)
+            }
+        }
+    }
+
+    fun loadSeeApps(onResult: (Result<SeeAppsResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val data = repository.getSeeApps()
+                onResult(Result.success(data))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
+
 }

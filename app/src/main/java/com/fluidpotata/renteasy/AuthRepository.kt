@@ -1,10 +1,15 @@
 package com.fluidpotata.renteasy
 
+import android.content.Context
+import android.content.SharedPreferences
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import androidx.core.content.edit
 
-class AuthRepository {
+class AuthRepository(context: Context) {
     private val api: ApiService
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
 
     init {
         val retrofit = Retrofit.Builder()
@@ -15,6 +20,12 @@ class AuthRepository {
         api = retrofit.create(ApiService::class.java)
     }
 
+    private fun saveToken(token: String) {
+        prefs.edit { putString("jwt", token) }
+    }
+
+    fun getToken(): String? = prefs.getString("jwt", null)
+
     suspend fun signup(
         name: String,
         username: String,
@@ -24,6 +35,26 @@ class AuthRepository {
         roomType: String
     ) = api.signup(SignupRequest(name, username, phone, password, confirmPassword, roomType))
 
-    suspend fun login(username: String, password: String) =
-        api.login(LoginRequest(username, password))
+    suspend fun login(username: String, password: String): LoginResponse {
+        val response = api.login(LoginRequest(username, password))
+        saveToken(response.access_token)
+        return response
+    }
+
+    suspend fun getAdminDashboard(): AdminDashboardResponse {
+        val token = getToken() ?: throw Exception("No token found")
+        return api.getAdminDashboard("Bearer $token")
+    }
+
+    suspend fun getCustomerDashboard(): CustomerDashboardResponse {
+        val token = getToken() ?: throw Exception("No token found")
+        return api.getCustomerDashboard("Bearer $token")
+    }
+
+    suspend fun getSeeApps(): SeeAppsResponse {
+        val token = getToken() ?: throw Exception("No token found")
+        return api.getSeeApps("Bearer $token")
+    }
+
+
 }
