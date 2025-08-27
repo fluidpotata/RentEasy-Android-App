@@ -79,5 +79,26 @@ class AuthViewModel(
         }
     }
 
+    fun loadTicketAdmin(onResult: (Result<TicketAdminResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val data = repository.getTicketAdmin()
+                onResult(Result.success(data))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
+    fun closeTicket(ticketId: Int, onResult: (Result<CloseTicketResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = repository.closeTicket(ticketId)
+                onResult(Result.success(response))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
 
 }

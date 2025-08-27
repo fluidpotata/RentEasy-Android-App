@@ -56,5 +56,14 @@ class AuthRepository(context: Context) {
         return api.getSeeApps("Bearer $token")
     }
 
+    suspend fun getTicketAdmin(): TicketAdminResponse {
+        val token = getToken() ?: throw Exception("No token found")
+        return api.getTicketAdmin("Bearer $token")
+    }
+
+    suspend fun closeTicket(ticketId: Int): CloseTicketResponse {
+        val token = getToken() ?: throw Exception("No token found")
+        return api.closeTicket("Bearer $token", CloseTicketRequest(ticketId))
+    }
 
 }

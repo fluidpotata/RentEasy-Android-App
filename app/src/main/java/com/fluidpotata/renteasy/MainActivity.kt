@@ -53,6 +53,9 @@ class MainActivity : ComponentActivity() {
                     onSignOut = {
                         currentScreen.value = "login"
                         roleString.value = ""
+                    },
+                    onNavigateToTickets = {
+                        currentScreen.value = "tickets"
                     }
                 )
 

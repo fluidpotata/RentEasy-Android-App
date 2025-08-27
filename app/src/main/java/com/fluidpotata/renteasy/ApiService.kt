@@ -100,6 +100,14 @@ interface ApiService {
 
     @GET("seeapps")
     suspend fun getSeeApps(@Header("Authorization") token: String): SeeAppsResponse
+
+    @GET("ticketadmin")
+    suspend fun getTicketAdmin(@Header("Authorization") token: String): TicketAdminResponse
+
+    @POST("ticketadmin")
+    @Headers("Content-Type: application/json")
+    suspend fun closeTicket(@Header("Authorization") token: String, @Body request: CloseTicketRequest): CloseTicketResponse
+
 }
 
 

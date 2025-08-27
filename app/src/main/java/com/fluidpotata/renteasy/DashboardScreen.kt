@@ -145,7 +145,7 @@ fun DashboardScreen(
                             description = "Review user submitted tickets",
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            // TODO: navigate to see tickets
+                            onNavigateToTickets()
                         }
                         Spacer(Modifier.height(12.dp))
                         AdminActionCard(
