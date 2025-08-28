@@ -56,6 +56,12 @@ class MainActivity : ComponentActivity() {
                     },
                     onNavigateToTickets = {
                         currentScreen.value = "tickets"
+                    },
+                    onNavigateToApplications = {
+                        currentScreen.value = "applications"
+                    },
+                    onNavigateToAddRoom = {
+                        currentScreen.value = "add_room"
                     }
                 )
 
@@ -65,8 +71,25 @@ class MainActivity : ComponentActivity() {
                         currentScreen.value = "dashboard"
                     }
                 )
-            }
+
+                "applications" -> ApplicationsScreen(
+                    authViewModel = vm,
+                    onBack = {
+                        currentScreen.value = "dashboard"
+                    }
+                )
+
+                "add_room" -> AddRoomScreen(
+                    authViewModel = vm,
+                    onRoomAdded = {
+                        currentScreen.value = "dashboard"
+                    },
+                    onBack = {
+                        currentScreen.value = "dashboard"
+                    }
+                )
             }
         }
+    }
     }
 }

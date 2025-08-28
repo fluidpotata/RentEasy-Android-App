@@ -47,8 +47,44 @@ data class CustomerDashboardResponse(
 }
 
 data class SeeAppsResponse(
-    val requests: List<Map<String, Any>>,
-    val available_rooms: List<Map<String, Any>>
+    val requests: List<List<Any>>,
+    val available_rooms: List<List<Any>>
+) {
+    val requestList: List<ApplicationRequest> get() = requests.map { list ->
+        ApplicationRequest(
+            id = (list[0] as Number).toInt(),
+            name = list[1] as String,
+            roomChoice = list[2] as String,
+            username = list[3] as String,
+            password = list[4] as String,
+            phone = list[5] as String
+        )
+    }
+
+    val availableRoomList: List<AvailableRoom> get() = available_rooms.map { list ->
+        AvailableRoom(
+            id = (list[0] as Number).toInt(),
+            roomName = list[1] as String,
+            type = list[2] as String,
+            status = list[3] as String
+        )
+    }
+}
+
+data class ApplicationRequest(
+    val id: Int,
+    val name: String,
+    val roomChoice: String,
+    val username: String,
+    val password: String,
+    val phone: String
+)
+
+data class AvailableRoom(
+    val id: Int,
+    val roomName: String,
+    val type: String,
+    val status: String
 )
 
 data class Ticket(
@@ -75,8 +111,26 @@ data class TicketAdminResponse(
     }
 }
 
+data class AllocateRoomRequest(
+    val room_id: Int,
+    val req_id: Int,
+    val name: String,
+    val roomChoice: String,
+    val username: String,
+    val password: String,
+    val phone: String
+)
+data class AllocateRoomResponse(val message: String)
+
+
 data class CloseTicketRequest(val ticket_id: Int)
 data class CloseTicketResponse(val message: String)
+
+// Add these data classes
+data class AddRoomRequest(val roomType: String, val roomName: String)
+data class AddRoomResponse(val message: String)
+
+
 
 
 interface ApiService {
@@ -108,6 +162,14 @@ interface ApiService {
     @Headers("Content-Type: application/json")
     suspend fun closeTicket(@Header("Authorization") token: String, @Body request: CloseTicketRequest): CloseTicketResponse
 
+    @POST("seeapps")
+    @Headers("Content-Type: application/json")
+    suspend fun allocateRoom(@Header("Authorization") token: String, @Body request: AllocateRoomRequest): AllocateRoomResponse
+
+    @POST("rooms")
+    @Headers("Content-Type: application/json")
+    suspend fun addRoom(
+        @Header("Authorization") token: String,
+        @Body request: AddRoomRequest
+    ): AddRoomResponse
 }
-
-

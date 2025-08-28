@@ -101,4 +101,35 @@ class AuthViewModel(
         }
     }
 
+    fun allocateRoom(
+        roomId: Int,
+        reqId: Int,
+        name: String,
+        roomChoice: String,
+        username: String,
+        password: String,
+        phone: String,
+        onResult: (Result<AllocateRoomResponse>) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val response = repository.allocateRoom(roomId, reqId, name, roomChoice, username, password, phone)
+                onResult(Result.success(response))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
+    fun addRoom(roomType: String, roomName: String, onResult: (Result<AddRoomResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = repository.addRoom(roomType, roomName)
+                onResult(Result.success(response))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
 }

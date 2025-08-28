@@ -8,6 +8,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 
 enum class UserRole { TENANT, LANDLORD }
 
@@ -19,7 +21,9 @@ fun DashboardScreen(
     token: String,
     authViewModel: AuthViewModel = viewModel(),
     onSignOut: () -> Unit = {},
-    onNavigateToTickets: () -> Unit = {}
+    onNavigateToTickets: () -> Unit = {},
+    onNavigateToApplications: () -> Unit = {},
+    onNavigateToAddRoom: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(0) }
 
@@ -34,12 +38,6 @@ fun DashboardScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var adminLoading by remember { mutableStateOf(false) }
     var adminError by remember { mutableStateOf<String?>(null) }
-
-    var seeAppsDialogVisible by remember { mutableStateOf(false) }
-    var seeAppsData by remember { mutableStateOf<SeeAppsResponse?>(null) }
-    var seeAppsLoading by remember { mutableStateOf(false) }
-    var seeAppsError by remember { mutableStateOf<String?>(null) }
-    var seeAppsFetchRequested by remember { mutableStateOf(false) }
 
     // Load dashboard data on role change
     LaunchedEffect(userRole) {
@@ -79,6 +77,13 @@ fun DashboardScreen(
                         label = { Text(label) },
                         icon = {} // optional
                     )
+                }
+            }
+        },
+        floatingActionButton = {
+            if (userRole == UserRole.LANDLORD && tabs[selectedTab] == "Rooms") {
+                FloatingActionButton(onClick = onNavigateToAddRoom) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Room")
                 }
             }
         }
@@ -121,103 +126,75 @@ fun DashboardScreen(
                     TenantInfoCard(title = "Tickets", value = data.ticketCount.toString())
                 }
                 userRole == UserRole.LANDLORD -> {
-                    Column {
-                        if (adminLoading) {
-                            CircularProgressIndicator()
+                    if (tabs[selectedTab] == "Rooms") {
+                        // TODO: Replace with actual rooms list
+                        Text("Rooms List Placeholder", style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.height(16.dp))
+                        Text("Use the + button below to add a new room.", style = MaterialTheme.typography.bodyMedium)
+                    } else {
+                        Column {
+                            if (adminLoading) {
+                                CircularProgressIndicator()
+                                Spacer(Modifier.height(12.dp))
+                            }
+                            adminError?.let {
+                                Text("Error loading admin data: $it", color = MaterialTheme.colorScheme.error)
+                                Spacer(Modifier.height(12.dp))
+                            }
+                            AdminActionCard(
+                                title = "Create New Bills",
+                                description = "Generate bills for everyone",
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                // TODO: trigger bill generation API
+                            }
                             Spacer(Modifier.height(12.dp))
-                        }
-                        adminError?.let {
-                            Text("Error loading admin data: $it", color = MaterialTheme.colorScheme.error)
+                            AdminActionCard(
+                                title = "Check Tickets",
+                                description = "Review user submitted tickets",
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                onNavigateToTickets()
+                            }
                             Spacer(Modifier.height(12.dp))
-                        }
-
-
-                        AdminActionCard(
-                            title = "Create New Bills",
-                            description = "Generate bills for everyone",
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            // TODO: trigger bill generation API
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        AdminActionCard(
-                            title = "Check Tickets",
-                            description = "Review user submitted tickets",
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            onNavigateToTickets()
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        AdminActionCard(
-                            title = "Join Requests",
-                            description = "Current join requests: ${adminData?.joinreqs ?: "-"}",
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            seeAppsDialogVisible = true
-                            seeAppsLoading = true
-                            seeAppsError = null
-                            seeAppsData = null
-                            seeAppsFetchRequested = true
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        AdminActionCard(
-                            title = "Rent Status",
-                            description = "Rent left to pay: ${adminData?.rent ?: "-"}",
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            // TODO: navigate to rent bills
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        AdminActionCard(
-                            title = "Internet Bill Status",
-                            description = "Bill left to pay: ${adminData?.internet ?: "-"}",
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            // TODO: navigate to internet bills
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        AdminActionCard(
-                            title = "Utility Bill Status",
-                            description = "Utility bill left: ${adminData?.utility ?: "-"}",
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            // TODO: navigate to utility bills
+                            AdminActionCard(
+                                title = "Join Requests",
+                                description = "Current join requests: ${adminData?.joinreqs ?: "-"}",
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                onNavigateToApplications()
+                            }
+                            Spacer(Modifier.height(12.dp))
+                            AdminActionCard(
+                                title = "Rent Status",
+                                description = "Rent left to pay: ${adminData?.rent ?: "-"}",
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                // TODO: navigate to rent bills
+                            }
+                            Spacer(Modifier.height(12.dp))
+                            AdminActionCard(
+                                title = "Internet Bill Status",
+                                description = "Bill left to pay: ${adminData?.internet ?: "-"}",
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                // TODO: navigate to internet bills
+                            }
+                            Spacer(Modifier.height(12.dp))
+                            AdminActionCard(
+                                title = "Utility Bill Status",
+                                description = "Utility bill left: ${adminData?.utility ?: "-"}",
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                // TODO: navigate to utility bills
+                            }
+                            Spacer(Modifier.height(12.dp))
                         }
                     }
                 }
             }
 
 
-            if (seeAppsDialogVisible) {
-                AlertDialog(
-                    onDismissRequest = { seeAppsDialogVisible = false },
-                    confirmButton = {
-                        TextButton(onClick = { seeAppsDialogVisible = false }) {
-                            Text("Close")
-                        }
-                    },
-                    title = { Text("Applications") },
-                    text = {
-                        when {
-                            seeAppsLoading -> CircularProgressIndicator()
-                            seeAppsError != null -> Text("Error: $seeAppsError")
-                            seeAppsData != null -> {
-                                Column {
-                                    Text("Requests:")
-                                    seeAppsData!!.requests.forEach { req ->
-                                        Text("- ${req["username"] ?: "Unknown"}")
-                                    }
-                                    Spacer(Modifier.height(8.dp))
-                                    Text("Available Rooms:")
-                                    seeAppsData!!.available_rooms.forEach { room ->
-                                        Text("- ${room["room_id"] ?: "Unknown"}")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                )
-            }
         }
     }
 }

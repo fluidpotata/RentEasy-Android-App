@@ -66,4 +66,21 @@ class AuthRepository(context: Context) {
         return api.closeTicket("Bearer $token", CloseTicketRequest(ticketId))
     }
 
+    suspend fun allocateRoom(
+        roomId: Int,
+        reqId: Int,
+        name: String,
+        roomChoice: String,
+        username: String,
+        password: String,
+        phone: String
+    ): AllocateRoomResponse {
+        val token = getToken() ?: throw Exception("No token found")
+        return api.allocateRoom("Bearer $token", AllocateRoomRequest(roomId, reqId, name, roomChoice, username, password, phone))
+    }
+
+    suspend fun addRoom(roomType: String, roomName: String): AddRoomResponse {
+        val token = getToken() ?: throw Exception("No token found")
+        return api.addRoom("Bearer $token", AddRoomRequest(roomType, roomName))
+    }
 }
