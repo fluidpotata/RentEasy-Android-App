@@ -56,6 +56,26 @@ class AuthRepository(context: Context) {
         return api.getSeeApps("Bearer $token")
     }
 
+    suspend fun getUpdateRoom(): UpdateRoomGetResponse {
+        val token = getToken() ?: throw Exception("No token found")
+        return api.getUpdateRoom("Bearer $token")
+    }
+
+    suspend fun postUpdateRoom(tenantId: Int, roomId: Int): UpdateRoomPostResponse {
+        val token = getToken() ?: throw Exception("No token found")
+        return api.postUpdateRoom("Bearer $token", UpdateRoomPostRequest(tenantId, roomId))
+    }
+
+    suspend fun getTenants(): TenantsGetResponse {
+        val token = getToken() ?: throw Exception("No token found")
+        return api.getTenants("Bearer $token")
+    }
+
+    suspend fun postTenantUpdate(tenantId: Int, option: String, value: String): PostTenantUpdateResponse {
+        val token = getToken() ?: throw Exception("No token found")
+        return api.postTenantUpdate("Bearer $token", PostTenantUpdateRequest(tenantId, option, value))
+    }
+
     suspend fun getTicketAdmin(): TicketAdminResponse {
         val token = getToken() ?: throw Exception("No token found")
         return api.getTicketAdmin("Bearer $token")

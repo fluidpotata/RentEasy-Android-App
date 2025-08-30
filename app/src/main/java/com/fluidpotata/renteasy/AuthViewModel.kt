@@ -132,4 +132,48 @@ class AuthViewModel(
         }
     }
 
+    fun loadUpdateRoomData(onResult: (Result<UpdateRoomGetResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val data = repository.getUpdateRoom()
+                onResult(Result.success(data))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
+    fun updateRoom(tenantId: Int, roomId: Int, onResult: (Result<UpdateRoomPostResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resp = repository.postUpdateRoom(tenantId, roomId)
+                onResult(Result.success(resp))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
+    fun loadTenants(onResult: (Result<TenantsGetResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val data = repository.getTenants()
+                onResult(Result.success(data))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
+    fun updateTenant(tenantId: Int, option: String, value: String, onResult: (Result<PostTenantUpdateResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resp = repository.postTenantUpdate(tenantId, option, value)
+                onResult(Result.success(resp))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
 }

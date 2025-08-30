@@ -127,10 +127,9 @@ fun DashboardScreen(
                 }
                 userRole == UserRole.LANDLORD -> {
                     if (tabs[selectedTab] == "Rooms") {
-                        // TODO: Replace with actual rooms list
-                        Text("Rooms List Placeholder", style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.height(16.dp))
-                        Text("Use the + button below to add a new room.", style = MaterialTheme.typography.bodyMedium)
+                        RoomUpdateScreen(authViewModel = authViewModel)
+                    } else if (tabs[selectedTab] == "Tenants") {
+                        TenantsScreen(authViewModel = authViewModel)
                     } else {
                         Column {
                             if (adminLoading) {

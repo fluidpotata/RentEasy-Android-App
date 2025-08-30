@@ -5,6 +5,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import com.google.gson.annotations.SerializedName
 
 
 data class SignupRequest(
@@ -130,6 +131,65 @@ data class CloseTicketResponse(val message: String)
 data class AddRoomRequest(val roomType: String, val roomName: String)
 data class AddRoomResponse(val message: String)
 
+// Update room API data classes
+data class TenantShort(
+    val id: Int,
+    val name: String
+)
+
+data class UpdateRoomGetResponse(
+    val tenants: List<List<Any>>,
+    val rooms: List<List<Any>>
+) {
+    val tenantList: List<TenantShort> get() = tenants.map { list ->
+        TenantShort(
+            id = (list[0] as Number).toInt(),
+            name = (list.getOrNull(2) as? String) ?: ""
+        )
+    }
+
+    val roomList: List<AvailableRoom> get() = rooms.map { list ->
+        AvailableRoom(
+            id = (list[0] as Number).toInt(),
+            roomName = list.getOrNull(1) as? String ?: "",
+            type = list.getOrNull(2) as? String ?: "",
+            status = list.getOrNull(3) as? String ?: ""
+        )
+    }
+}
+
+data class UpdateRoomPostRequest(val tenantid: Int, val roomid: Int)
+data class UpdateRoomPostResponse(val message: String)
+
+// Tenants API
+data class TenantItem(
+    val id: Int,
+    val userId: Int,
+    val name: String,
+    val packageId: Int,
+    val phone: String
+)
+
+data class TenantsGetResponse(val tenants: List<List<Any>>) {
+    val tenantList: List<TenantItem> get() = tenants.map { list ->
+        TenantItem(
+            id = (list.getOrNull(0) as? Number)?.toInt() ?: 0,
+            userId = (list.getOrNull(1) as? Number)?.toInt() ?: 0,
+            name = list.getOrNull(2) as? String ?: "",
+            packageId = (list.getOrNull(3) as? Number)?.toInt() ?: 0,
+            phone = list.getOrNull(4) as? String ?: ""
+        )
+    }
+}
+
+data class PostTenantUpdateRequest(
+    val tenantid: Int,
+    val option: String,
+    @SerializedName("val") val value: String
+)
+
+data class PostTenantUpdateResponse(val message: String)
+
 
 
 
@@ -172,4 +232,18 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body request: AddRoomRequest
     ): AddRoomResponse
+
+    @GET("updateroom")
+    suspend fun getUpdateRoom(@Header("Authorization") token: String): UpdateRoomGetResponse
+
+    @POST("updateroom")
+    @Headers("Content-Type: application/json")
+    suspend fun postUpdateRoom(@Header("Authorization") token: String, @Body request: UpdateRoomPostRequest): UpdateRoomPostResponse
+
+    @GET("tenants")
+    suspend fun getTenants(@Header("Authorization") token: String): TenantsGetResponse
+
+    @POST("tenants")
+    @Headers("Content-Type: application/json")
+    suspend fun postTenantUpdate(@Header("Authorization") token: String, @Body request: PostTenantUpdateRequest): PostTenantUpdateResponse
 }
