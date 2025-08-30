@@ -127,6 +127,23 @@ data class AllocateRoomResponse(val message: String)
 data class CloseTicketRequest(val ticket_id: Int)
 data class CloseTicketResponse(val message: String)
 
+// Customer tickets (tenant) response
+data class TicketsGetResponse(val tickets: List<List<Any>>) {
+    val ticketList: List<Ticket> get() = tickets.map { list ->
+        Ticket(
+            id = (list.getOrNull(0) as? Number)?.toInt() ?: 0,
+            userId = (list.getOrNull(1) as? Number)?.toInt() ?: 0,
+            category = list.getOrNull(2) as? String ?: "",
+            subject = list.getOrNull(3) as? String ?: "",
+            status = list.getOrNull(4) as? String ?: "",
+            username = ""
+        )
+    }
+}
+
+data class CreateTicketRequest(val category: String, val description: String)
+data class CreateTicketResponse(val message: String)
+
 // Add these data classes
 data class AddRoomRequest(val roomType: String, val roomName: String)
 data class AddRoomResponse(val message: String)
@@ -207,12 +224,13 @@ data class BillItem(
 
 data class BillsGetResponse(val bills: List<List<Any>>) {
     val billList: List<BillItem> get() = bills.map { list ->
+        // server returns: [billid, userid, billtypeid, status, trxid, month, amount, type]
         BillItem(
             serial = (list.getOrNull(0) as? Number)?.toInt() ?: 0,
-            name = list.getOrNull(1) as? String ?: "",
-            amount = list.getOrNull(2) as? String ?: list.getOrNull(2)?.toString() ?: "",
-            month = list.getOrNull(3) as? String ?: "",
-            status = list.getOrNull(4) as? String ?: ""
+            name = list.getOrNull(7) as? String ?: "",
+            amount = list.getOrNull(6) as? String ?: list.getOrNull(6)?.toString() ?: "",
+            month = list.getOrNull(5) as? String ?: "",
+            status = list.getOrNull(3) as? String ?: ""
         )
     }
 }
@@ -244,6 +262,13 @@ interface ApiService {
 
     @GET("ticketadmin")
     suspend fun getTicketAdmin(@Header("Authorization") token: String): TicketAdminResponse
+
+    @GET("ticket")
+    suspend fun getTickets(@Header("Authorization") token: String): TicketsGetResponse
+
+    @POST("ticket")
+    @Headers("Content-Type: application/json")
+    suspend fun createTicket(@Header("Authorization") token: String, @Body request: CreateTicketRequest): CreateTicketResponse
 
     @POST("ticketadmin")
     @Headers("Content-Type: application/json")

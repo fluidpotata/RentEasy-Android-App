@@ -95,8 +95,7 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-        .padding(16.dp)
-        .verticalScroll(rememberScrollState())
+                .padding(16.dp)
         ) {
             Text("Selected Tab: ${tabs[selectedTab]}", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(12.dp))
@@ -109,12 +108,22 @@ fun DashboardScreen(
                 loading -> CircularProgressIndicator()
                 error != null -> Text("Error: $error", color = MaterialTheme.colorScheme.error)
                 userRole == UserRole.TENANT && customerData != null -> {
-                    TenantDashboardScreen(
-                        customerData = customerData!!,
-                        onPayRent = { /* TODO: initiate rent payment */ },
-                        onPayInternet = { /* TODO: initiate internet payment */ },
-                        onPayUtility = { /* TODO: initiate utility payment */ }
-                    )
+                    when (selectedTab) {
+                        0 -> TenantDashboardScreen(
+                            customerData = customerData!!,
+                            onPayRent = { selectedTab = 1 },
+                            onPayInternet = { selectedTab = 1 },
+                            onPayUtility = { selectedTab = 1 }
+                        )
+                        1 -> PaymentsScreen(authViewModel = authViewModel, initialKind = null, onCloseInitial = {})
+                        2 -> CustomerTicketsScreen(authViewModel = authViewModel)
+                        else -> TenantDashboardScreen(
+                            customerData = customerData!!,
+                            onPayRent = { selectedTab = 1 },
+                            onPayInternet = { selectedTab = 1 },
+                            onPayUtility = { selectedTab = 1 }
+                        )
+                    }
                 }
                 userRole == UserRole.LANDLORD -> {
                     if (tabs[selectedTab] == "Rooms") {

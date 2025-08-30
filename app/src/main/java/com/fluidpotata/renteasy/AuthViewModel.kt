@@ -176,6 +176,28 @@ class AuthViewModel(
         }
     }
 
+    fun loadTickets(onResult: (Result<TicketsGetResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val data = repository.getTickets()
+                onResult(Result.success(data))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
+    fun createTicket(category: String, description: String, onResult: (Result<CreateTicketResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resp = repository.createTicket(category, description)
+                onResult(Result.success(resp))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
     fun updateTenant(tenantId: Int, option: String, value: String, onResult: (Result<PostTenantUpdateResponse>) -> Unit) {
         viewModelScope.launch {
             try {

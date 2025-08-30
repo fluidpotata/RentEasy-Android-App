@@ -127,6 +127,16 @@ class AuthRepository(context: Context) {
     return api.closeTicket("Bearer $token", CloseTicketRequest(ticketId))
     }
 
+    suspend fun getTickets(): TicketsGetResponse {
+        val token = getValidToken() ?: throw Exception("No token found")
+        return api.getTickets("Bearer $token")
+    }
+
+    suspend fun createTicket(category: String, description: String): CreateTicketResponse {
+        val token = getValidToken() ?: throw Exception("No token found")
+        return api.createTicket("Bearer $token", CreateTicketRequest(category, description))
+    }
+
     suspend fun allocateRoom(
         roomId: Int,
         reqId: Int,
@@ -166,5 +176,6 @@ class AuthRepository(context: Context) {
         val token = getValidToken() ?: throw Exception("No token found")
         return api.getRentBills("Bearer $token")
     }
+
 
 }
