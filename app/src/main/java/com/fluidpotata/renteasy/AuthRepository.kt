@@ -2,14 +2,24 @@ package com.fluidpotata.renteasy
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.room.Room
+import com.fluidpotata.renteasy.data.AppDatabase
+import com.fluidpotata.renteasy.data.AuthToken
+import com.fluidpotata.renteasy.data.AuthTokenDao
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.core.content.edit
 
 class AuthRepository(context: Context) {
     private val api: ApiService
     private val prefs: SharedPreferences =
         context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+    private val db: AppDatabase = Room.databaseBuilder(context, AppDatabase::class.java, "renteasy-db").build()
+    private val tokenDao: AuthTokenDao = db.authTokenDao()
 
     init {
         val retrofit = Retrofit.Builder()
@@ -20,11 +30,38 @@ class AuthRepository(context: Context) {
         api = retrofit.create(ApiService::class.java)
     }
 
-    private fun saveToken(token: String) {
+    private fun saveTokenToPrefs(token: String) {
         prefs.edit { putString("jwt", token) }
     }
 
+    private fun saveTokenToDb(token: String, role: String? = null, username: String? = null) {
+        val now = System.currentTimeMillis()
+        val authToken = AuthToken(token = token, role = role, username = username, timestamp = now)
+        CoroutineScope(Dispatchers.IO).launch {
+            tokenDao.upsert(authToken)
+        }
+    }
+
+    // synchronous fast token from prefs (no DB access)
     fun getToken(): String? = prefs.getString("jwt", null)
+
+    // suspend-safe token fetch that checks DB expiry and falls back to prefs
+    suspend fun getValidToken(): String? {
+        val tokenObj = withContext(Dispatchers.IO) { tokenDao.getToken() }
+        if (tokenObj != null) {
+            val age = System.currentTimeMillis() - tokenObj.timestamp
+            if (age <= 60 * 60 * 1000L) return tokenObj.token
+            // expired - clear
+            CoroutineScope(Dispatchers.IO).launch { tokenDao.clear() }
+            return null
+        }
+        return prefs.getString("jwt", null)
+    }
+
+    // suspend access to saved token record
+    suspend fun getSavedAuth(): com.fluidpotata.renteasy.data.AuthToken? {
+        return withContext(Dispatchers.IO) { tokenDao.getToken() }
+    }
 
     suspend fun signup(
         name: String,
@@ -37,53 +74,55 @@ class AuthRepository(context: Context) {
 
     suspend fun login(username: String, password: String): LoginResponse {
         val response = api.login(LoginRequest(username, password))
-        saveToken(response.access_token)
+    // persist token to DB with timestamp
+    saveTokenToPrefs(response.access_token)
+    saveTokenToDb(response.access_token, role = response.role, username = username)
         return response
     }
 
     suspend fun getAdminDashboard(): AdminDashboardResponse {
-        val token = getToken() ?: throw Exception("No token found")
-        return api.getAdminDashboard("Bearer $token")
+    val token = getValidToken() ?: throw Exception("No token found")
+    return api.getAdminDashboard("Bearer $token")
     }
 
     suspend fun getCustomerDashboard(): CustomerDashboardResponse {
-        val token = getToken() ?: throw Exception("No token found")
-        return api.getCustomerDashboard("Bearer $token")
+    val token = getValidToken() ?: throw Exception("No token found")
+    return api.getCustomerDashboard("Bearer $token")
     }
 
     suspend fun getSeeApps(): SeeAppsResponse {
-        val token = getToken() ?: throw Exception("No token found")
-        return api.getSeeApps("Bearer $token")
+    val token = getValidToken() ?: throw Exception("No token found")
+    return api.getSeeApps("Bearer $token")
     }
 
     suspend fun getUpdateRoom(): UpdateRoomGetResponse {
-        val token = getToken() ?: throw Exception("No token found")
-        return api.getUpdateRoom("Bearer $token")
+    val token = getValidToken() ?: throw Exception("No token found")
+    return api.getUpdateRoom("Bearer $token")
     }
 
     suspend fun postUpdateRoom(tenantId: Int, roomId: Int): UpdateRoomPostResponse {
-        val token = getToken() ?: throw Exception("No token found")
-        return api.postUpdateRoom("Bearer $token", UpdateRoomPostRequest(tenantId, roomId))
+    val token = getValidToken() ?: throw Exception("No token found")
+    return api.postUpdateRoom("Bearer $token", UpdateRoomPostRequest(tenantId, roomId))
     }
 
     suspend fun getTenants(): TenantsGetResponse {
-        val token = getToken() ?: throw Exception("No token found")
-        return api.getTenants("Bearer $token")
+    val token = getValidToken() ?: throw Exception("No token found")
+    return api.getTenants("Bearer $token")
     }
 
     suspend fun postTenantUpdate(tenantId: Int, option: String, value: String): PostTenantUpdateResponse {
-        val token = getToken() ?: throw Exception("No token found")
-        return api.postTenantUpdate("Bearer $token", PostTenantUpdateRequest(tenantId, option, value))
+    val token = getValidToken() ?: throw Exception("No token found")
+    return api.postTenantUpdate("Bearer $token", PostTenantUpdateRequest(tenantId, option, value))
     }
 
     suspend fun getTicketAdmin(): TicketAdminResponse {
-        val token = getToken() ?: throw Exception("No token found")
-        return api.getTicketAdmin("Bearer $token")
+    val token = getValidToken() ?: throw Exception("No token found")
+    return api.getTicketAdmin("Bearer $token")
     }
 
     suspend fun closeTicket(ticketId: Int): CloseTicketResponse {
-        val token = getToken() ?: throw Exception("No token found")
-        return api.closeTicket("Bearer $token", CloseTicketRequest(ticketId))
+    val token = getValidToken() ?: throw Exception("No token found")
+    return api.closeTicket("Bearer $token", CloseTicketRequest(ticketId))
     }
 
     suspend fun allocateRoom(
@@ -95,12 +134,12 @@ class AuthRepository(context: Context) {
         password: String,
         phone: String
     ): AllocateRoomResponse {
-        val token = getToken() ?: throw Exception("No token found")
-        return api.allocateRoom("Bearer $token", AllocateRoomRequest(roomId, reqId, name, roomChoice, username, password, phone))
+    val token = getValidToken() ?: throw Exception("No token found")
+    return api.allocateRoom("Bearer $token", AllocateRoomRequest(roomId, reqId, name, roomChoice, username, password, phone))
     }
 
     suspend fun addRoom(roomType: String, roomName: String): AddRoomResponse {
-        val token = getToken() ?: throw Exception("No token found")
-        return api.addRoom("Bearer $token", AddRoomRequest(roomType, roomName))
+    val token = getValidToken() ?: throw Exception("No token found")
+    return api.addRoom("Bearer $token", AddRoomRequest(roomType, roomName))
     }
 }

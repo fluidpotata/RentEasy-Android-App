@@ -22,6 +22,15 @@ class MainActivity : ComponentActivity() {
             val currentScreen = remember { mutableStateOf("login") }
             val roleString = remember { mutableStateOf("") }
 
+            // check saved auth token and auto-login if present and not expired
+            LaunchedEffect(Unit) {
+                val saved = vm.getSavedAuth()
+                if (saved != null) {
+                    roleString.value = saved.role ?: ""
+                    currentScreen.value = "dashboard"
+                }
+            }
+
             val userRole = when (roleString.value.lowercase()) {
                 "tenant" -> UserRole.TENANT
                 "landlord", "admin" -> UserRole.LANDLORD

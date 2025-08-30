@@ -176,4 +176,9 @@ class AuthViewModel(
         }
     }
 
+    // suspend helper to read saved auth info (token + role + username + timestamp)
+    suspend fun getSavedAuth(): com.fluidpotata.renteasy.data.AuthToken? {
+        return repository.getSavedAuth()
+    }
+
 }
