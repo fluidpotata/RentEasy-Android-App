@@ -182,7 +182,7 @@ fun TenantsScreen(
                             Text(it, color = MaterialTheme.colorScheme.primary)
                         }
                     }
-ad
+
 
                     localMsg?.let {
                         Spacer(Modifier.height(12.dp))
