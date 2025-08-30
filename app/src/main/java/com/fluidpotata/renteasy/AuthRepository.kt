@@ -177,5 +177,22 @@ class AuthRepository(context: Context) {
         return api.getRentBills("Bearer $token")
     }
 
+    suspend fun getMyBills(): BillsGetResponse {
+        val token = getValidToken() ?: throw Exception("No token found")
+        return api.getMyBills("Bearer $token")
+    }
+
+    suspend fun payBill(bill: Int, tID: String): PayBillResponse {
+        val token = getValidToken() ?: throw Exception("No token found")
+        val saved = getSavedAuth() ?: throw Exception("Not logged in")
+
+        val body = PayBillRequest(
+            id = saved.userId ?: throw Exception("Missing userId"),
+            bill = bill,
+            tID = tID
+        )
+        return api.payBill("Bearer $token", body)
+    }
+
 
 }

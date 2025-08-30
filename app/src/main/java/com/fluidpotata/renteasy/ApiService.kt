@@ -235,6 +235,15 @@ data class BillsGetResponse(val bills: List<List<Any>>) {
     }
 }
 
+// include both tenantid and id to be compatible with backend variations
+data class PayBillRequest(
+    val id: Int,     // userId
+    val bill: Int,
+    val tID: String 
+)
+
+data class PayBillResponse(val message: String)
+
 
 
 
@@ -310,5 +319,16 @@ interface ApiService {
 
     @GET("seebills/rent")
     suspend fun getRentBills(@Header("Authorization") token: String): BillsGetResponse
+
+    // tenant payment endpoints
+    @GET("paybill")
+    suspend fun getMyBills(@Header("Authorization") token: String): BillsGetResponse
+
+    @POST("paybill")
+    suspend fun payBill(
+        @Header("Authorization") token: String,
+        @Body req: PayBillRequest
+    ): PayBillResponse
+
 
 }
