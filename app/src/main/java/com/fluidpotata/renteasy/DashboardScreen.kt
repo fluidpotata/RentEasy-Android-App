@@ -102,28 +102,12 @@ fun DashboardScreen(
                 loading -> CircularProgressIndicator()
                 error != null -> Text("Error: $error", color = MaterialTheme.colorScheme.error)
                 userRole == UserRole.TENANT && customerData != null -> {
-                    val data = customerData!!
-                    TenantInfoCard(title = "Package", value = data.`package`)
-                    Spacer(Modifier.height(12.dp))
-                    TenantBillCard(
-                        title = "Rent Bill",
-                        unpaid = data.rentUnpaid,
-                        onPay = { /* TODO initiate rent payment */ }
+                    TenantDashboardScreen(
+                        customerData = customerData!!,
+                        onPayRent = { /* TODO: initiate rent payment */ },
+                        onPayInternet = { /* TODO: initiate internet payment */ },
+                        onPayUtility = { /* TODO: initiate utility payment */ }
                     )
-                    Spacer(Modifier.height(12.dp))
-                    TenantBillCard(
-                        title = "Internet Bill",
-                        unpaid = data.internetUnpaid,
-                        onPay = { /* TODO initiate internet payment */ }
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    TenantBillCard(
-                        title = "Utility Bill",
-                        unpaid = data.utilityUnpaid,
-                        onPay = { /* TODO initiate utility payment */ }
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    TenantInfoCard(title = "Tickets", value = data.ticketCount.toString())
                 }
                 userRole == UserRole.LANDLORD -> {
                     if (tabs[selectedTab] == "Rooms") {
@@ -131,64 +115,14 @@ fun DashboardScreen(
                     } else if (tabs[selectedTab] == "Tenants") {
                         TenantsScreen(authViewModel = authViewModel)
                     } else {
-                        Column {
-                            if (adminLoading) {
-                                CircularProgressIndicator()
-                                Spacer(Modifier.height(12.dp))
-                            }
-                            adminError?.let {
-                                Text("Error loading admin data: $it", color = MaterialTheme.colorScheme.error)
-                                Spacer(Modifier.height(12.dp))
-                            }
-                            AdminActionCard(
-                                title = "Create New Bills",
-                                description = "Generate bills for everyone",
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                // TODO: trigger bill generation API
-                            }
-                            Spacer(Modifier.height(12.dp))
-                            AdminActionCard(
-                                title = "Check Tickets",
-                                description = "Review user submitted tickets",
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                onNavigateToTickets()
-                            }
-                            Spacer(Modifier.height(12.dp))
-                            AdminActionCard(
-                                title = "Join Requests",
-                                description = "Current join requests: ${adminData?.joinreqs ?: "-"}",
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                onNavigateToApplications()
-                            }
-                            Spacer(Modifier.height(12.dp))
-                            AdminActionCard(
-                                title = "Rent Status",
-                                description = "Rent left to pay: ${adminData?.rent ?: "-"}",
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                // TODO: navigate to rent bills
-                            }
-                            Spacer(Modifier.height(12.dp))
-                            AdminActionCard(
-                                title = "Internet Bill Status",
-                                description = "Bill left to pay: ${adminData?.internet ?: "-"}",
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                // TODO: navigate to internet bills
-                            }
-                            Spacer(Modifier.height(12.dp))
-                            AdminActionCard(
-                                title = "Utility Bill Status",
-                                description = "Utility bill left: ${adminData?.utility ?: "-"}",
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                // TODO: navigate to utility bills
-                            }
-                            Spacer(Modifier.height(12.dp))
-                        }
+                        AdminDashboardScreen(
+                            adminData = adminData,
+                            adminLoading = adminLoading,
+                            adminError = adminError,
+                            onNavigateToTickets = onNavigateToTickets,
+                            onNavigateToApplications = onNavigateToApplications,
+                            onNavigateToAddRoom = onNavigateToAddRoom
+                        )
                     }
                 }
             }
@@ -198,64 +132,4 @@ fun DashboardScreen(
     }
 }
 
-@Composable
-private fun AdminActionCard(
-    title: String,
-    description: String? = null,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    ElevatedCard(
-        modifier = modifier,
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            if (description != null) {
-                Spacer(Modifier.height(6.dp))
-                Text(description, style = MaterialTheme.typography.bodyMedium)
-            }
-            Spacer(Modifier.height(12.dp))
-            OutlinedButton(onClick = onClick) { Text("Open") }
-        }
-    }
-}
 
-@Composable
-private fun TenantInfoCard(title: String, value: String) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall)
-            Spacer(Modifier.height(2.dp))
-            Text(value, style = MaterialTheme.typography.titleMedium)
-        }
-    }
-}
-
-@Composable
-private fun TenantBillCard(title: String, unpaid: Boolean, onPay: () -> Unit) {
-    val statusText = if (unpaid) "Bill Unpaid" else "Bill Paid"
-    val statusColor = if (unpaid) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(4.dp))
-            AssistChip(
-                onClick = {},
-                enabled = false,
-                label = { Text(statusText) },
-                colors = AssistChipDefaults.assistChipColors(
-                    disabledLabelColor = statusColor
-                )
-            )
-            Spacer(Modifier.height(8.dp))
-            FilledTonalButton(onClick = onPay, enabled = unpaid) { Text("Pay") }
-        }
-    }
-}
