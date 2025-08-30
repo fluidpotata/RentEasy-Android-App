@@ -18,7 +18,9 @@ class AuthRepository(context: Context) {
     private val api: ApiService
     private val prefs: SharedPreferences =
         context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
-    private val db: AppDatabase = Room.databaseBuilder(context, AppDatabase::class.java, "renteasy-db").build()
+    private val db: AppDatabase = Room.databaseBuilder(context, AppDatabase::class.java, "renteasy-db")
+        .fallbackToDestructiveMigration()
+        .build()
     private val tokenDao: AuthTokenDao = db.authTokenDao()
 
     init {
