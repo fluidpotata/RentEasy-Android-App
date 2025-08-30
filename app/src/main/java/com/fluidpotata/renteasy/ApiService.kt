@@ -20,7 +20,7 @@ data class SignupRequest(
 data class SignupResponse(val message: String)
 
 data class LoginRequest(val username: String, val password: String)
-data class LoginResponse(val access_token: String, val message: String, val role: String)
+data class LoginResponse(val access_token: String, val message: String, val role: String, val id: Int?)
 
 
 data class AdminDashboardResponse(
@@ -37,9 +37,9 @@ data class AdminDashboardResponse(
 data class CustomerDashboardResponse(
     val username: String,
     val `package`: String,
-    val bill: Boolean,
-    val internetbill: Boolean,
-    val utilitybill: Boolean,
+    val bill: Any?,
+    val internetbill: Any?,
+    val utilitybill: Any?,
     val ticketCount: Int
 ) {
     val rentUnpaid get() = bill != false

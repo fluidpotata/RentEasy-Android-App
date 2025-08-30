@@ -23,24 +23,31 @@ fun TenantDashboardScreen(
     onPayInternet: () -> Unit = {},
     onPayUtility: () -> Unit = {}
 ) {
+    fun isUnpaid(value: Any?): Boolean {
+        return when (value) {
+            is Boolean -> value != false
+            is String -> value.equals("unpaid", ignoreCase = true)
+            else -> false
+        }
+    }
     Column {
         TenantInfoCard(title = "Package", value = customerData.`package`)
         Spacer(Modifier.height(12.dp))
         TenantBillCard(
             title = "Rent Bill",
-            unpaid = customerData.rentUnpaid,
+            unpaid = isUnpaid(customerData.bill),
             onPay = onPayRent
         )
         Spacer(Modifier.height(12.dp))
         TenantBillCard(
             title = "Internet Bill",
-            unpaid = customerData.internetUnpaid,
+            unpaid = isUnpaid(customerData.internetbill),
             onPay = onPayInternet
         )
         Spacer(Modifier.height(12.dp))
         TenantBillCard(
             title = "Utility Bill",
-            unpaid = customerData.utilityUnpaid,
+            unpaid = isUnpaid(customerData.utilitybill),
             onPay = onPayUtility
         )
         Spacer(Modifier.height(12.dp))

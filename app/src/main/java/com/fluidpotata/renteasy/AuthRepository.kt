@@ -34,9 +34,9 @@ class AuthRepository(context: Context) {
         prefs.edit { putString("jwt", token) }
     }
 
-    private fun saveTokenToDb(token: String, role: String? = null, username: String? = null) {
+    private fun saveTokenToDb(token: String, role: String? = null, username: String? = null, userId: Int? = null) {
         val now = System.currentTimeMillis()
-        val authToken = AuthToken(token = token, role = role, username = username, timestamp = now)
+        val authToken = AuthToken(token = token, role = role, username = username, userId = userId, timestamp = now)
         CoroutineScope(Dispatchers.IO).launch {
             tokenDao.upsert(authToken)
         }
@@ -74,9 +74,9 @@ class AuthRepository(context: Context) {
 
     suspend fun login(username: String, password: String): LoginResponse {
         val response = api.login(LoginRequest(username, password))
-    // persist token to DB with timestamp
-    saveTokenToPrefs(response.access_token)
-    saveTokenToDb(response.access_token, role = response.role, username = username)
+        // persist token to DB with timestamp and user id
+        saveTokenToPrefs(response.access_token)
+        saveTokenToDb(response.access_token, role = response.role, username = username, userId = response.id)
         return response
     }
 

@@ -9,5 +9,6 @@ data class AuthToken(
     val token: String,
     val role: String? = null,
     val username: String? = null,
+    val userId: Int? = null,
     val timestamp: Long
 )
