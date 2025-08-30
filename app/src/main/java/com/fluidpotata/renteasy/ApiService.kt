@@ -196,6 +196,27 @@ data class GenerateBillResponse(
     val error: String? = null
 )
 
+// Bill item and bills response used by seebills endpoints
+data class BillItem(
+    val serial: Int,
+    val name: String,
+    val amount: String,
+    val month: String,
+    val status: String
+)
+
+data class BillsGetResponse(val bills: List<List<Any>>) {
+    val billList: List<BillItem> get() = bills.map { list ->
+        BillItem(
+            serial = (list.getOrNull(0) as? Number)?.toInt() ?: 0,
+            name = list.getOrNull(1) as? String ?: "",
+            amount = list.getOrNull(2) as? String ?: list.getOrNull(2)?.toString() ?: "",
+            month = list.getOrNull(3) as? String ?: "",
+            status = list.getOrNull(4) as? String ?: ""
+        )
+    }
+}
+
 
 
 
@@ -255,4 +276,14 @@ interface ApiService {
 
     @GET("generatebill")
     suspend fun generateBills(@Header("Authorization") token: String): GenerateBillResponse
+
+    @GET("seebills/internet")
+    suspend fun getInternetBills(@Header("Authorization") token: String): BillsGetResponse
+
+    @GET("seebills/utility")
+    suspend fun getUtilityBills(@Header("Authorization") token: String): BillsGetResponse
+
+    @GET("seebills/rent")
+    suspend fun getRentBills(@Header("Authorization") token: String): BillsGetResponse
+
 }

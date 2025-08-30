@@ -187,6 +187,39 @@ class AuthViewModel(
         }
     }
 
+    fun loadInternetBills(onResult: (Result<BillsGetResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resp = repository.getInternetBills()
+                onResult(Result.success(resp))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
+    fun loadUtilityBills(onResult: (Result<BillsGetResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resp = repository.getUtilityBills()
+                onResult(Result.success(resp))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
+    fun loadRentBills(onResult: (Result<BillsGetResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resp = repository.getRentBills()
+                onResult(Result.success(resp))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
     // suspend helper to read saved auth info (token + role + username + timestamp)
     suspend fun getSavedAuth(): com.fluidpotata.renteasy.data.AuthToken? {
         return repository.getSavedAuth()

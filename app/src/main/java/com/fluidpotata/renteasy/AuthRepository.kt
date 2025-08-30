@@ -148,4 +148,21 @@ class AuthRepository(context: Context) {
         val token = getValidToken() ?: throw Exception("No token found")
         return api.generateBills("Bearer $token")
     }
+
+    // Bills endpoints
+    suspend fun getInternetBills(): BillsGetResponse {
+        val token = getValidToken() ?: throw Exception("No token found")
+        return api.getInternetBills("Bearer $token")
+    }
+
+    suspend fun getUtilityBills(): BillsGetResponse {
+        val token = getValidToken() ?: throw Exception("No token found")
+        return api.getUtilityBills("Bearer $token")
+    }
+
+    suspend fun getRentBills(): BillsGetResponse {
+        val token = getValidToken() ?: throw Exception("No token found")
+        return api.getRentBills("Bearer $token")
+    }
+
 }

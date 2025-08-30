@@ -1,5 +1,6 @@
 package com.fluidpotata.renteasy
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,7 +23,8 @@ fun AdminDashboardScreen(
     onNavigateToTickets: () -> Unit = {},
     onNavigateToApplications: () -> Unit = {},
     onNavigateToAddRoom: () -> Unit = {},
-    onGenerateBills: () -> Unit = {}
+    onGenerateBills: () -> Unit = {},
+    onOpenBills: (String) -> Unit = {}
 ) {
     Column {
         if (adminLoading) {
@@ -49,6 +51,30 @@ fun AdminDashboardScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             onNavigateToTickets()
+        }
+        Spacer(Modifier.height(12.dp))
+        AdminActionCard(
+            title = "Open Rent Bills",
+            description = "Rent left to pay: ${adminData?.rent ?: "-"}",
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            onOpenBills("rent")
+        }
+        Spacer(Modifier.height(12.dp))
+        AdminActionCard(
+            title = "Open Internet Bills",
+            description = "Bill left to pay: ${adminData?.internet ?: "-"}",
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            onOpenBills("internet")
+        }
+        Spacer(Modifier.height(12.dp))
+        AdminActionCard(
+            title = "Open Utility Bills",
+            description = "Utility bill left: ${adminData?.utility ?: "-"}",
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            onOpenBills("utility")
         }
         Spacer(Modifier.height(12.dp))
         AdminActionCard(
@@ -94,7 +120,7 @@ fun AdminActionCard(
     onClick: () -> Unit
 ) {
     ElevatedCard(
-        modifier = modifier,
+        modifier = modifier.clickable(onClick = onClick),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

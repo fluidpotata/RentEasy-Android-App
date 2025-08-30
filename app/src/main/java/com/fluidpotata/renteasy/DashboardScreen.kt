@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+// ...existing imports...
 
 enum class UserRole { TENANT, LANDLORD }
 
@@ -39,6 +40,7 @@ fun DashboardScreen(
     var adminLoading by remember { mutableStateOf(false) }
     var adminError by remember { mutableStateOf<String?>(null) }
     var adminMessage by remember { mutableStateOf<String?>(null) }
+        var openBillsKind by remember { mutableStateOf<String?>(null) }
 
     // Load dashboard data on role change
     LaunchedEffect(userRole) {
@@ -98,6 +100,10 @@ fun DashboardScreen(
         ) {
             Text("Selected Tab: ${tabs[selectedTab]}", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(12.dp))
+            adminMessage?.let {
+                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.height(8.dp))
+            }
 
             when {
                 loading -> CircularProgressIndicator()
@@ -119,24 +125,30 @@ fun DashboardScreen(
                         AdminDashboardScreen(
                             adminData = adminData,
                             adminLoading = adminLoading,
-                            adminError = adminError ?: adminMessage,
+                            adminError = adminError,
                             onNavigateToTickets = onNavigateToTickets,
                             onNavigateToApplications = onNavigateToApplications,
                             onNavigateToAddRoom = onNavigateToAddRoom,
-                            onGenerateBills = {
-                                adminLoading = true
-                                adminError = null
-                                adminMessage = null
-                                authViewModel.generateBills { result ->
-                                    result.onSuccess {
-                                        adminMessage = it.message ?: "Bills generated"
-                                    }.onFailure {
-                                        adminError = it.message
-                                    }
-                                    adminLoading = false
-                                }
-                            }
+                                onOpenBills = { kind -> openBillsKind = kind; adminMessage = "Opening ${kind} bills" }
                         )
+
+                            // Show bills in a dialog so it is visible independent of parent scrolling
+                            openBillsKind?.let { kind ->
+                                AlertDialog(
+                                    onDismissRequest = { openBillsKind = null },
+                                    confirmButton = {
+                                        OutlinedButton(onClick = { openBillsKind = null }) { Text("Close") }
+                                    },
+                                    title = { Text("${kind.replaceFirstChar { it.uppercase() }} Bills") },
+                                    text = {
+                                        androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxWidth().height(480.dp)) {
+                                            BillsScreen(kind = kind, authViewModel = authViewModel, onVerifyBills = {
+                                                // TODO: navigate to verify bills screen
+                                            })
+                                        }
+                                    }
+                                )
+                            }
                     }
                 }
             }
