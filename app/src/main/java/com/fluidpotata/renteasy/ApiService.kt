@@ -190,6 +190,12 @@ data class PostTenantUpdateRequest(
 
 data class PostTenantUpdateResponse(val message: String)
 
+// Generate bills response
+data class GenerateBillResponse(
+    val message: String? = null,
+    val error: String? = null
+)
+
 
 
 
@@ -246,4 +252,7 @@ interface ApiService {
     @POST("tenants")
     @Headers("Content-Type: application/json")
     suspend fun postTenantUpdate(@Header("Authorization") token: String, @Body request: PostTenantUpdateRequest): PostTenantUpdateResponse
+
+    @GET("generatebill")
+    suspend fun generateBills(@Header("Authorization") token: String): GenerateBillResponse
 }

@@ -132,6 +132,17 @@ class AuthViewModel(
         }
     }
 
+    fun generateBills(onResult: (Result<GenerateBillResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resp = repository.generateBills()
+                onResult(Result.success(resp))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
     fun loadUpdateRoomData(onResult: (Result<UpdateRoomGetResponse>) -> Unit) {
         viewModelScope.launch {
             try {

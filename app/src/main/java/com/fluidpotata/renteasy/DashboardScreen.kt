@@ -38,6 +38,7 @@ fun DashboardScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var adminLoading by remember { mutableStateOf(false) }
     var adminError by remember { mutableStateOf<String?>(null) }
+    var adminMessage by remember { mutableStateOf<String?>(null) }
 
     // Load dashboard data on role change
     LaunchedEffect(userRole) {
@@ -118,10 +119,23 @@ fun DashboardScreen(
                         AdminDashboardScreen(
                             adminData = adminData,
                             adminLoading = adminLoading,
-                            adminError = adminError,
+                            adminError = adminError ?: adminMessage,
                             onNavigateToTickets = onNavigateToTickets,
                             onNavigateToApplications = onNavigateToApplications,
-                            onNavigateToAddRoom = onNavigateToAddRoom
+                            onNavigateToAddRoom = onNavigateToAddRoom,
+                            onGenerateBills = {
+                                adminLoading = true
+                                adminError = null
+                                adminMessage = null
+                                authViewModel.generateBills { result ->
+                                    result.onSuccess {
+                                        adminMessage = it.message ?: "Bills generated"
+                                    }.onFailure {
+                                        adminError = it.message
+                                    }
+                                    adminLoading = false
+                                }
+                            }
                         )
                     }
                 }

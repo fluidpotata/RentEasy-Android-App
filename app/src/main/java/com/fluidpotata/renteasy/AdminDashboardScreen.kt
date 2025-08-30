@@ -21,7 +21,8 @@ fun AdminDashboardScreen(
     adminError: String?,
     onNavigateToTickets: () -> Unit = {},
     onNavigateToApplications: () -> Unit = {},
-    onNavigateToAddRoom: () -> Unit = {}
+    onNavigateToAddRoom: () -> Unit = {},
+    onGenerateBills: () -> Unit = {}
 ) {
     Column {
         if (adminLoading) {
@@ -39,7 +40,7 @@ fun AdminDashboardScreen(
             description = "Generate bills for everyone",
             modifier = Modifier.fillMaxWidth()
         ) {
-            // TODO: trigger bill generation API
+            onGenerateBills()
         }
         Spacer(Modifier.height(12.dp))
         AdminActionCard(

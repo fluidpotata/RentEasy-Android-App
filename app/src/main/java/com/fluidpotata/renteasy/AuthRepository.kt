@@ -142,4 +142,10 @@ class AuthRepository(context: Context) {
     val token = getValidToken() ?: throw Exception("No token found")
     return api.addRoom("Bearer $token", AddRoomRequest(roomType, roomName))
     }
+
+    // Generate bills
+    suspend fun generateBills(): GenerateBillResponse {
+        val token = getValidToken() ?: throw Exception("No token found")
+        return api.generateBills("Bearer $token")
+    }
 }
