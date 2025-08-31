@@ -286,6 +286,17 @@ class AuthViewModel(
         }
     }
 
+    fun loadRentInfo(userId: Int, onResult: (Result<RentInfo>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resp = repository.getRentInfo(userId)
+                onResult(Result.success(resp))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
 
     // suspend helper to read saved auth info (token + role + username + timestamp)
     suspend fun getSavedAuth(): com.fluidpotata.renteasy.data.AuthToken? {

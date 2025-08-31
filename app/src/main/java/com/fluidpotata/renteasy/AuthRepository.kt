@@ -205,5 +205,11 @@ class AuthRepository(context: Context) {
         return api.verifyBill("Bearer $token", mapOf("paymentid" to paymentId))
     }
 
+    // Public (no auth) rent info fetch for a given user id.
+    suspend fun getRentInfo(userId: Int): RentInfo {
+        // This endpoint is public per spec; do not attach Authorization header.
+        return api.getRent(userId)
+    }
+
 
 }

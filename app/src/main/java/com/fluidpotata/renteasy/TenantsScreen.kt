@@ -67,6 +67,9 @@ fun TenantsScreen(
                     // Tenant dropdown
                     var tenantExpanded by remember { mutableStateOf(false) }
                     var selectedTenant by remember { mutableStateOf<TenantItem?>(null) }
+                    var rentInfo by remember { mutableStateOf<RentInfo?>(null) }
+                    var rentInfoLoading by remember { mutableStateOf(false) }
+                    var rentInfoError by remember { mutableStateOf<String?>(null) }
 
                     ExposedDropdownMenuBox(expanded = tenantExpanded, onExpandedChange = { tenantExpanded = !tenantExpanded }) {
                         OutlinedTextField(
@@ -83,6 +86,15 @@ fun TenantsScreen(
                                 DropdownMenuItem(text = { Text(t.name.ifBlank { "#${t.id}" }) }, onClick = {
                                     selectedTenant = t
                                     tenantExpanded = false
+                                    // fetch rent info when tenant selected
+                                    rentInfoLoading = true
+                                    rentInfoError = null
+                                    rentInfo = null
+                                    authViewModel.loadRentInfo(t.userId) { result ->
+                                        result.onSuccess { info -> rentInfo = info }
+                                            .onFailure { rentInfoError = it.message }
+                                        rentInfoLoading = false
+                                    }
                                 })
                             }
                         }
@@ -106,17 +118,31 @@ fun TenantsScreen(
                             expanded = optionExpanded,
                             onExpandedChange = { optionExpanded = !optionExpanded }
                         ) {
+                            val labelText = when (selectedOption) {
+                                "rent" -> {
+                                    val cur = rentInfo?.rent?.takeIf { it > 0 }
+                                    if (cur != null) "Change Rent (Current: $cur)" else "Change Rent"
+                                }
+                                "internet" -> {
+                                    val cur = rentInfo?.internet?.takeIf { it > 0 }
+                                    if (cur != null) "Change Internet Bill (Current: $cur)" else "Change Internet Bill"
+                                }
+                                "utility" -> {
+                                    val cur = rentInfo?.utility?.takeIf { it > 0 }
+                                    if (cur != null) "Change Utility Bill (Current: $cur)" else "Change Utility Bill"
+                                }
+                                else -> "Select an action"
+                            }
                             OutlinedTextField(
-                                value = when (selectedOption) {
-                                    "rent" -> "Change Rent"
-                                    "internet" -> "Change Internet Bill"
-                                    "utility" -> "Change Utility Bill"
-                                    else -> "Select an action"
-                                },
+                                value = labelText,
                                 onValueChange = {},
                                 readOnly = true,
                                 trailingIcon = {
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = optionExpanded)
+                                },
+                                supportingText = {
+                                    if (rentInfoLoading) Text("Loading current amounts...")
+                                    else rentInfoError?.let { Text(it) }
                                 },
                                 modifier = Modifier
                                     .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
@@ -128,8 +154,25 @@ fun TenantsScreen(
                                 onDismissRequest = { optionExpanded = false }
                             ) {
                                 listOf("rent", "internet", "utility").forEach { opt ->
+                                    val currentVal = when (opt) {
+                                        "rent" -> rentInfo?.rent
+                                        "internet" -> rentInfo?.internet
+                                        "utility" -> rentInfo?.utility
+                                        else -> null
+                                    }
+                                    val text = buildString {
+                                        append(
+                                            when (opt) {
+                                                "rent" -> "Change Rent"
+                                                "internet" -> "Change Internet Bill"
+                                                "utility" -> "Change Utility Bill"
+                                                else -> opt
+                                            }
+                                        )
+                                        if (currentVal != null && currentVal > 0) append(" (Current: $currentVal)")
+                                    }
                                     DropdownMenuItem(
-                                        text = { Text(opt) },
+                                        text = { Text(text) },
                                         onClick = {
                                             selectedOption = opt
                                             optionExpanded = false

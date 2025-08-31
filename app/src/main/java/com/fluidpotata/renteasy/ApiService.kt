@@ -5,6 +5,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.Path
 import com.google.gson.annotations.SerializedName
 
 
@@ -286,6 +287,13 @@ data class PayBillRequest(
 
 data class PayBillResponse(val message: String)
 
+// Public rent info endpoint response (no auth required)
+data class RentInfo(
+    val internet: Int? = null,
+    val rent: Int? = null,
+    val utility: Int? = null
+)
+
 
 
 
@@ -378,6 +386,10 @@ interface ApiService {
     @POST("unverifiedbills")
     @Headers("Content-Type: application/json")
     suspend fun verifyBill(@Header("Authorization") token: String, @Body request: Map<String, Int>): GenerateBillResponse
+
+    // Public endpoint: fetch current rent/internet/utility amounts for a tenant by user id
+    @GET("getrent/{userid}")
+    suspend fun getRent(@Path("userid") userId: Int): RentInfo
 
 
 }
