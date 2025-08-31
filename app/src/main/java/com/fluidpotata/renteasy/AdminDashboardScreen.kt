@@ -2,6 +2,8 @@ package com.fluidpotata.renteasy
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,91 +26,48 @@ fun AdminDashboardScreen(
     onNavigateToApplications: () -> Unit = {},
     onNavigateToAddRoom: () -> Unit = {},
     onGenerateBills: () -> Unit = {},
-    onOpenBills: (String) -> Unit = {}
+    onOpenBills: (String) -> Unit = {},
+    onRefresh: () -> Unit = {}
 ) {
-    Column {
-        if (adminLoading) {
-            // simple loading indicator inline; keep minimal to avoid bringing extra imports
-            Text("Loading...", style = MaterialTheme.typography.bodyMedium)
-            Spacer(Modifier.height(12.dp))
+    LazyColumn(modifier = Modifier.padding(8.dp)) {
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                OutlinedButton(onClick = onRefresh) { Text("Refresh") }
+            }
+            Spacer(Modifier.height(8.dp))
         }
-        adminError?.let {
-            Text("Error loading admin data: $it", color = MaterialTheme.colorScheme.error)
-            Spacer(Modifier.height(12.dp))
+        item {
+            if (adminLoading) {
+                Text("Loading...", style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(12.dp))
+            }
         }
 
-        AdminActionCard(
-            title = "Create New Bills",
-            description = "Generate bills for everyone",
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            onGenerateBills()
+        item {
+            adminError?.let {
+                Text("Error loading admin data: $it", color = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.height(12.dp))
+            }
         }
-        Spacer(Modifier.height(12.dp))
-        AdminActionCard(
-            title = "Check Tickets",
-            description = "Review user submitted tickets",
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            onNavigateToTickets()
+
+        items(listOf(
+            Triple("Create New Bills", "Generate bills for everyone", { onGenerateBills() }),
+            Triple("Check Tickets", "Review user submitted tickets", { onNavigateToTickets() }),
+            Triple("Open Rent Bills", "Rent left to pay: ${adminData?.rent ?: "-"}", { onOpenBills("rent") }),
+            Triple("Open Internet Bills", "Bill left to pay: ${adminData?.internet ?: "-"}", { onOpenBills("internet") }),
+            Triple("Open Utility Bills", "Utility bill left: ${adminData?.utility ?: "-"}", { onOpenBills("utility") }),
+            Triple("Join Requests", "Current join requests: ${adminData?.joinreqs ?: "-"}", { onNavigateToApplications() })
+        )) { itemTriple ->
+            val (title, desc, action) = itemTriple
+            AdminActionCard(
+                title = title,
+                description = desc,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                action()
+            }
+            Spacer(Modifier.height(12.dp))
         }
-        Spacer(Modifier.height(12.dp))
-        AdminActionCard(
-            title = "Open Rent Bills",
-            description = "Rent left to pay: ${adminData?.rent ?: "-"}",
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            onOpenBills("rent")
-        }
-        Spacer(Modifier.height(12.dp))
-        AdminActionCard(
-            title = "Open Internet Bills",
-            description = "Bill left to pay: ${adminData?.internet ?: "-"}",
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            onOpenBills("internet")
-        }
-        Spacer(Modifier.height(12.dp))
-        AdminActionCard(
-            title = "Open Utility Bills",
-            description = "Utility bill left: ${adminData?.utility ?: "-"}",
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            onOpenBills("utility")
-        }
-        Spacer(Modifier.height(12.dp))
-        AdminActionCard(
-            title = "Join Requests",
-            description = "Current join requests: ${adminData?.joinreqs ?: "-"}",
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            onNavigateToApplications()
-        }
-        Spacer(Modifier.height(12.dp))
-        AdminActionCard(
-            title = "Rent Status",
-            description = "Rent left to pay: ${adminData?.rent ?: "-"}",
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // TODO: navigate to rent bills
-        }
-        Spacer(Modifier.height(12.dp))
-        AdminActionCard(
-            title = "Internet Bill Status",
-            description = "Bill left to pay: ${adminData?.internet ?: "-"}",
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // TODO: navigate to internet bills
-        }
-        Spacer(Modifier.height(12.dp))
-        AdminActionCard(
-            title = "Utility Bill Status",
-            description = "Utility bill left: ${adminData?.utility ?: "-"}",
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // TODO: navigate to utility bills
-        }
-        Spacer(Modifier.height(12.dp))
     }
 }
 

@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -22,11 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+
+
 @Composable
 fun BillsScreen(
-    kind: String, // "internet" or "utility"
+    kind: String, // "internet", "utility", "rent"
     authViewModel: AuthViewModel,
-    onVerifyBills: () -> Unit = {}
+    onVerifyBills: (paymentId: Int) -> Unit = {}
 ) {
     val loading = remember { mutableStateOf(true) }
     val error = remember { mutableStateOf<String?>(null) }
@@ -35,28 +39,18 @@ fun BillsScreen(
     LaunchedEffect(kind) {
         loading.value = true
         error.value = null
-        if (kind == "internet") {
-            authViewModel.loadInternetBills { result ->
-                result.onSuccess {
-                    bills.value = it.billList
-                }.onFailure {
-                    error.value = it.message
-                }
-                loading.value = false
-            }
-        } else if (kind == "utility") {
-            authViewModel.loadUtilityBills { result ->
-                result.onSuccess {
-                    bills.value = it.billList
-                }.onFailure {
-                    error.value = it.message
-                }
-                loading.value = false
-            }
-        } else if (kind == "rent") {
-            authViewModel.loadRentBills { result ->
-                result.onSuccess {
-                    bills.value = it.billList
+        val loader = when (kind) {
+            "internet" -> authViewModel::loadInternetBills
+            "utility" -> authViewModel::loadUtilityBills
+            "rent" -> authViewModel::loadRentBills
+            else -> null
+        }
+
+        if (loader != null) {
+            loader { result ->
+                result.onSuccess { response ->
+                    // response.billList is already List<BillItem>
+                    bills.value = response.billList
                 }.onFailure {
                     error.value = it.message
                 }
@@ -68,37 +62,60 @@ fun BillsScreen(
         }
     }
 
-    Column(modifier = Modifier.padding(12.dp)) {
-        Text("${kind.replaceFirstChar { it.uppercase() }} Bills", style = MaterialTheme.typography.titleLarge)
+    Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+        Text(
+            "${kind.replaceFirstChar { it.uppercase() }} Bills",
+            style = MaterialTheme.typography.titleLarge
+        )
         Spacer(Modifier.height(8.dp))
 
         when {
             loading.value -> Text("Loading...", style = MaterialTheme.typography.bodyMedium)
-            error.value != null -> Text("Error: ${error.value}", color = MaterialTheme.colorScheme.error)
+            error.value != null -> Text(
+                "Error: ${error.value}",
+                color = MaterialTheme.colorScheme.error
+            )
             else -> {
                 if (bills.value.isEmpty()) {
                     Text("No bills found")
                 } else {
-                    // Bound the LazyColumn height to avoid Compose measure crash
-                    LazyColumn(
-                        modifier = Modifier.weight(1f, fill = true)
-                    ) {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(bills.value) { bill ->
-                            ElevatedCard(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.elevatedCardElevation(2.dp)) {
+                            ElevatedCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                elevation = CardDefaults.elevatedCardElevation(2.dp)
+                            ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                                        Text("#${bill.serial} - ${bill.name}", style = MaterialTheme.typography.titleMedium)
-                                        Text("${bill.month}")
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            "#${bill.serial} - ${bill.name}",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            maxLines = 1,
+                                            modifier = Modifier.fillMaxWidth(0.7f)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(bill.month)
                                     }
+
                                     Spacer(Modifier.height(6.dp))
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
                                         Text("Amount: ${bill.amount}")
                                         Text("Status: ${bill.status}")
                                     }
+
                                     Spacer(Modifier.height(8.dp))
+
                                     if (bill.status == "unverified") {
-                                        // show a button to navigate to verify bills page (not implemented)
-                                        Button(onClick = onVerifyBills) {
+                                        Button(onClick = { onVerifyBills(bill.serial) }) {
                                             Text("Verify")
                                         }
                                     }

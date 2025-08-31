@@ -10,10 +10,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-// ...existing imports...
 
 enum class UserRole { TENANT, LANDLORD }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,9 +38,10 @@ fun DashboardScreen(
     var adminLoading by remember { mutableStateOf(false) }
     var adminError by remember { mutableStateOf<String?>(null) }
     var adminMessage by remember { mutableStateOf<String?>(null) }
-        var openBillsKind by remember { mutableStateOf<String?>(null) }
+    var openBillsKind by remember { mutableStateOf<String?>(null) }
+    var showUnverifiedDialog by remember { mutableStateOf(false) }
 
-    // Load dashboard data on role change
+    // Load dashboard data when role changes
     LaunchedEffect(userRole) {
         loading = true
         error = null
@@ -78,7 +77,7 @@ fun DashboardScreen(
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
                         label = { Text(label) },
-                        icon = {} // optional
+                        icon = {}
                     )
                 }
             }
@@ -91,7 +90,7 @@ fun DashboardScreen(
             }
         }
     ) { padding ->
-    Column(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -126,45 +125,78 @@ fun DashboardScreen(
                     }
                 }
                 userRole == UserRole.LANDLORD -> {
-                    if (tabs[selectedTab] == "Rooms") {
-                        RoomUpdateScreen(authViewModel = authViewModel)
-                    } else if (tabs[selectedTab] == "Tenants") {
-                        TenantsScreen(authViewModel = authViewModel)
-                    } else {
-                        AdminDashboardScreen(
+                    when (tabs[selectedTab]) {
+                        "Rooms" -> RoomUpdateScreen(authViewModel = authViewModel)
+                        "Tenants" -> TenantsScreen(authViewModel = authViewModel)
+                        else -> AdminDashboardScreen(
                             adminData = adminData,
                             adminLoading = adminLoading,
                             adminError = adminError,
                             onNavigateToTickets = onNavigateToTickets,
                             onNavigateToApplications = onNavigateToApplications,
                             onNavigateToAddRoom = onNavigateToAddRoom,
-                                onOpenBills = { kind -> openBillsKind = kind; adminMessage = "Opening ${kind} bills" }
-                        )
-
-                            // Show bills in a dialog so it is visible independent of parent scrolling
-                            openBillsKind?.let { kind ->
-                                AlertDialog(
-                                    onDismissRequest = { openBillsKind = null },
-                                    confirmButton = {
-                                        OutlinedButton(onClick = { openBillsKind = null }) { Text("Close") }
-                                    },
-                                    title = { Text("${kind.replaceFirstChar { it.uppercase() }} Bills") },
-                                    text = {
-                                        androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxWidth().height(480.dp)) {
-                                            BillsScreen(kind = kind, authViewModel = authViewModel, onVerifyBills = {
-                                                // TODO: navigate to verify bills screen
-                                            })
-                                        }
-                                    }
-                                )
+                            onOpenBills = { kind ->
+                                openBillsKind = kind
+                                adminMessage = "Opening ${kind} bills"
                             }
+                            , onRefresh = {
+                                adminLoading = true
+                                adminError = null
+                                authViewModel.loadAdminDashboardResult { result ->
+                                    result.onSuccess { adminData = it }
+                                        .onFailure { adminError = it.message }
+                                    adminLoading = false
+                                }
+                            }
+                        )
                     }
                 }
             }
+        }
 
+        // Bills dialog
+        openBillsKind?.let { kind ->
+            AlertDialog(
+                onDismissRequest = { openBillsKind = null },
+                confirmButton = { OutlinedButton(onClick = { openBillsKind = null }) { Text("Close") } },
+                title = { Text("${kind.replaceFirstChar { it.uppercase() }} Bills") },
+                text = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(480.dp) // fixed height
+                    ) {
+                        BillsScreen(kind = kind, authViewModel = authViewModel, onVerifyBills = {
+                            showUnverifiedDialog = true
+                        })
+                    }
+                }
+            )
+        }
 
+        // Unverified bills dialog
+        if (showUnverifiedDialog) {
+            AlertDialog(
+                onDismissRequest = { showUnverifiedDialog = false },
+                confirmButton = { OutlinedButton(onClick = { showUnverifiedDialog = false }) { Text("Close") } },
+                title = { Text("Unverified Bills") },
+                text = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(480.dp) // fixed height
+                    ) {
+                        UnverifiedBillsScreen(authViewModel = authViewModel, onVerified = {
+                            authViewModel.loadAdminDashboardResult { result ->
+                                result.onSuccess { adminData = it }
+                                    .onFailure { adminError = it.message }
+                            }
+                            showUnverifiedDialog = false
+                            openBillsKind = null
+                        })
+                    }
+                }
+            )
         }
     }
 }
-
-

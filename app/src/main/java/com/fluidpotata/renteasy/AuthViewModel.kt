@@ -264,6 +264,28 @@ class AuthViewModel(
         }
     }
 
+    fun loadUnverifiedBills(onResult: (Result<BillsGetResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resp = repository.getUnverifiedBills()
+                onResult(Result.success(resp))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
+    fun verifyBill(paymentId: Int, onResult: (Result<GenerateBillResponse>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resp = repository.verifyBill(paymentId)
+                onResult(Result.success(resp))
+            } catch (e: Exception) {
+                onResult(Result.failure(e))
+            }
+        }
+    }
+
 
     // suspend helper to read saved auth info (token + role + username + timestamp)
     suspend fun getSavedAuth(): com.fluidpotata.renteasy.data.AuthToken? {

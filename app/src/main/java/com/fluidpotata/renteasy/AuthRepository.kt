@@ -194,5 +194,16 @@ class AuthRepository(context: Context) {
         return api.payBill("Bearer $token", body)
     }
 
+    // Admin: fetch unverified bills and verify a payment
+    suspend fun getUnverifiedBills(): BillsGetResponse {
+        val token = getValidToken() ?: throw Exception("No token found")
+        return api.getUnverifiedBills("Bearer $token")
+    }
+
+    suspend fun verifyBill(paymentId: Int): GenerateBillResponse {
+        val token = getValidToken() ?: throw Exception("No token found")
+        return api.verifyBill("Bearer $token", mapOf("paymentid" to paymentId))
+    }
+
 
 }

@@ -219,19 +219,61 @@ data class BillItem(
     val name: String,
     val amount: String,
     val month: String,
-    val status: String
-)
+    val status: String,
+    val tenantId: Int? = null,
+    val trxId: String? = null,
+    val type: String? = null
+) {
+    companion object {
+        fun fromArray(arr: List<Any?>): BillItem {
+            // The backend currently returns two variants:
+            // Short form: [serial, name, amount, month, status]
+            // Long form:  [paymentId, tenantId, billtypeid, status, trxid, month, amount, type]
+            // Detect by checking size and types and map accordingly.
+            // Helper to parse int-like values safely
+            fun parseInt(v: Any?): Int {
+                return when (v) {
+                    is Number -> v.toInt()
+                    is String -> v.toIntOrNull() ?: 0
+                    else -> 0
+                }
+            }
+
+            // Short form detection: second element is a String (name) and size >=5
+            if (arr.size >= 5 && arr.getOrNull(1) is String) {
+                val serial = parseInt(arr.getOrNull(0))
+                val name = arr.getOrNull(1)?.toString() ?: ""
+                val amount = arr.getOrNull(2)?.toString() ?: "-"
+                val month = arr.getOrNull(3)?.toString() ?: ""
+                val status = arr.getOrNull(4)?.toString() ?: ""
+                return BillItem(serial = serial, name = name, amount = amount, month = month, status = status)
+            }
+
+            // Fallback to long form mapping
+            val serial = parseInt(arr.getOrNull(0))
+            val tenantId = when (val v = arr.getOrNull(1)) {
+                is Number -> v.toInt()
+                is String -> v.toIntOrNull()
+                else -> null
+            }
+            val status = arr.getOrNull(3)?.toString() ?: ""
+            val trx = arr.getOrNull(4)?.toString()
+            val month = arr.getOrNull(5)?.toString() ?: ""
+            val amount = arr.getOrNull(6)?.toString() ?: "-"
+            val type = arr.getOrNull(7)?.toString()
+            // name is not provided by the long-form endpoint; use tenantId as placeholder when available
+            val name = arr.getOrNull(2)?.toString()?.takeIf { it.isNotBlank() }
+                ?: tenantId?.let { "Tenant #$it" } ?: ""
+            return BillItem(serial = serial, name = name, amount = amount, month = month, status = status, tenantId = tenantId, trxId = trx, type = type)
+        }
+    }
+}
 
 data class BillsGetResponse(val bills: List<List<Any>>) {
-    val billList: List<BillItem> get() = bills.map { list ->
-        // server returns: [billid, userid, billtypeid, status, trxid, month, amount, type]
-        BillItem(
-            serial = (list.getOrNull(0) as? Number)?.toInt() ?: 0,
-            name = list.getOrNull(7) as? String ?: "",
-            amount = list.getOrNull(6) as? String ?: list.getOrNull(6)?.toString() ?: "",
-            month = list.getOrNull(5) as? String ?: "",
-            status = list.getOrNull(3) as? String ?: ""
-        )
+    val billList: List<BillItem> get() = bills.map { arr ->
+        // server returns arrays like: [serial, name, amount, month, status]
+        // map each inner array to a BillItem using the helper
+        BillItem.fromArray(arr)
     }
 }
 
@@ -329,6 +371,13 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body req: PayBillRequest
     ): PayBillResponse
+
+    @GET("unverifiedbills")
+    suspend fun getUnverifiedBills(@Header("Authorization") token: String): BillsGetResponse
+
+    @POST("unverifiedbills")
+    @Headers("Content-Type: application/json")
+    suspend fun verifyBill(@Header("Authorization") token: String, @Body request: Map<String, Int>): GenerateBillResponse
 
 
 }
