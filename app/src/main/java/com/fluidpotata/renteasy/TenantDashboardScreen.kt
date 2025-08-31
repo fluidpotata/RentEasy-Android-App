@@ -1,5 +1,7 @@
 package com.fluidpotata.renteasy
 
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,28 +32,42 @@ fun TenantDashboardScreen(
             else -> false
         }
     }
-    Column {
-        TenantInfoCard(title = "Package", value = customerData.`package`)
-        Spacer(Modifier.height(12.dp))
-        TenantBillCard(
-            title = "Rent Bill",
-            unpaid = isUnpaid(customerData.bill),
-            onPay = onPayRent
-        )
-        Spacer(Modifier.height(12.dp))
-        TenantBillCard(
-            title = "Internet Bill",
-            unpaid = isUnpaid(customerData.internetbill),
-            onPay = onPayInternet
-        )
-        Spacer(Modifier.height(12.dp))
-        TenantBillCard(
-            title = "Utility Bill",
-            unpaid = isUnpaid(customerData.utilitybill),
-            onPay = onPayUtility
-        )
-        Spacer(Modifier.height(12.dp))
-        TenantInfoCard(title = "Tickets", value = customerData.ticketCount.toString())
+    LazyColumn {
+        item {
+            TenantInfoCard(title = "Package", value = customerData.`package`)
+            Spacer(Modifier.height(12.dp))
+        }
+
+        item {
+            TenantBillCard(
+                title = "Rent Bill",
+                unpaid = isUnpaid(customerData.bill),
+                onPay = onPayRent
+            )
+            Spacer(Modifier.height(12.dp))
+        }
+
+        item {
+            TenantBillCard(
+                title = "Internet Bill",
+                unpaid = isUnpaid(customerData.internetbill),
+                onPay = onPayInternet
+            )
+            Spacer(Modifier.height(12.dp))
+        }
+
+        item {
+            TenantBillCard(
+                title = "Utility Bill",
+                unpaid = isUnpaid(customerData.utilitybill),
+                onPay = onPayUtility
+            )
+            Spacer(Modifier.height(12.dp))
+        }
+
+        item {
+            TenantInfoCard(title = "Unresolved Tickets", value = customerData.ticketCount.toString())
+        }
     }
 }
 
